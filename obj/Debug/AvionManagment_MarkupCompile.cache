@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-E:\gestion_reservation\AvionManagment\AvionManagment\obj\Debug\
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\
 AvionManagment
 none
 false
 DEBUG;TRACE
 
-2-1559171828
+4598043416
 12599848858
-30-610045547
+34-626090274
 36954474291
-AjoutAirportWindow.xaml;UpdateAirport.xaml;
+AjoutAirportWindow.xaml;AjoutAvionWindow.xaml;UpdateAirport.xaml;UpdateAvionWindow.xaml;
 
 False
 

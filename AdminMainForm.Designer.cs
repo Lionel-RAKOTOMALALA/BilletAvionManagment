@@ -191,6 +191,7 @@
             this.AvionMenuBtn.TabIndex = 3;
             this.AvionMenuBtn.Text = "Avion";
             this.AvionMenuBtn.UseVisualStyleBackColor = true;
+            this.AvionMenuBtn.Click += new System.EventHandler(this.AvionMenuBtn_Click);
             // 
             // AeroportMenuBtn
             // 

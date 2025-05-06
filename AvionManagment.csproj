@@ -135,6 +135,9 @@
     <Compile Include="AjoutAirportWindow.xaml.cs">
       <DependentUpon>AjoutAirportWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AjoutAvionWindow.xaml.cs">
+      <DependentUpon>AjoutAvionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -167,6 +170,12 @@
     <Compile Include="Tableau_user.Designer.cs">
       <DependentUpon>Tableau_user.cs</DependentUpon>
     </Compile>
+    <Compile Include="Tab_avion.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Tab_avion.Designer.cs">
+      <DependentUpon>Tab_avion.cs</DependentUpon>
+    </Compile>
     <Compile Include="UpdateAirport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -175,6 +184,9 @@
     </Compile>
     <Compile Include="UpdateAirport.xaml.cs">
       <DependentUpon>UpdateAirport.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UpdateAvionWindow.xaml.cs">
+      <DependentUpon>UpdateAvionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UpdateUser.cs">
       <SubType>Form</SubType>
@@ -255,7 +267,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="AjoutAvionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UpdateAirport.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UpdateAvionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

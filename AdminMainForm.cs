@@ -9,6 +9,7 @@ namespace AvionManagment
         // Référence aux panneaux que nous allons afficher
         private adminPanel adminPanelControl;
         private Tableau_aeroport tableauAeroportControl;
+        private Tableau_avion tableauAvionControl;
 
         public AdminMainForm()
         {
@@ -21,7 +22,7 @@ namespace AvionManagment
             InitializePanels();
 
             // Afficher le panneau Dashboard par défaut
-            ShowDashboard();
+            ShowAvionPanel();
         }
 
         private void InitializePanels()
@@ -29,10 +30,12 @@ namespace AvionManagment
             // Créer les instances des contrôles
             adminPanelControl = new adminPanel();
             tableauAeroportControl = new Tableau_aeroport();
+            tableauAvionControl = new Tableau_avion();
 
             // Configurer les contrôles pour qu'ils remplissent le contentPanel
             adminPanelControl.Dock = DockStyle.Fill;
             tableauAeroportControl.Dock = DockStyle.Fill;
+            tableauAvionControl.Dock = DockStyle.Fill;  
 
             // Ne pas les ajouter tout de suite au contentPanel
         }
@@ -66,7 +69,17 @@ namespace AvionManagment
             contentPanel.Controls.Add(adminPanelControl);
             adminPanelControl.BringToFront();
         }
+        private void ShowAvionPanel()
+        {
+            // Mettre en évidence le bouton sélectionné
+            ResetButtonColors();
+            AvionMenuBtn.BackColor = Color.FromArgb(0, 26, 56); // Couleur plus foncée pour indiquer la sélection
 
+            // Afficher le tableau des aéroports
+            ClearContentPanel();
+            contentPanel.Controls.Add(tableauAvionControl);
+            tableauAvionControl.BringToFront();
+        }
         private void ShowAeroportPanel()
         {
             // Mettre en évidence le bouton sélectionné
@@ -78,6 +91,7 @@ namespace AvionManagment
             contentPanel.Controls.Add(tableauAeroportControl);
             tableauAeroportControl.BringToFront();
         }
+
 
         private void ResetButtonColors()
         {
@@ -132,6 +146,11 @@ namespace AvionManagment
         private void dashboardBtn_Click_1(object sender, EventArgs e)
         {
             ShowDashboard();
+        }
+
+        private void AvionMenuBtn_Click(object sender, EventArgs e)
+        {
+            ShowAvionPanel();
         }
     }
 }
