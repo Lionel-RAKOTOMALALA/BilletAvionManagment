@@ -54,6 +54,8 @@
     <Reference Include="MySql.Data, Version=9.3.0.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <HintPath>..\packages\MySql.Data.9.3.0\lib\net48\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
@@ -84,6 +86,7 @@
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -93,6 +96,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
     <Reference Include="ZstdSharp, Version=0.8.5.0, Culture=neutral, PublicKeyToken=8d151af33a4ad5cf, processorArchitecture=MSIL">
       <HintPath>..\packages\ZstdSharp.Port.0.8.5\lib\net462\ZstdSharp.dll</HintPath>
     </Reference>
@@ -121,6 +125,15 @@
     </Compile>
     <Compile Include="admin_dashboard.Designer.cs">
       <DependentUpon>admin_dashboard.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AjoutAirport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AjoutAirport.Designer.cs">
+      <DependentUpon>AjoutAirport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AjoutAirportWindow.xaml.cs">
+      <DependentUpon>AjoutAirportWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -154,6 +167,15 @@
     <Compile Include="Tableau_user.Designer.cs">
       <DependentUpon>Tableau_user.cs</DependentUpon>
     </Compile>
+    <Compile Include="UpdateAirport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UpdateAirport.Designer.cs">
+      <DependentUpon>UpdateAirport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UpdateAirport.xaml.cs">
+      <DependentUpon>UpdateAirport.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UpdateUser.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -168,6 +190,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="admin_dashboard.resx">
       <DependentUpon>admin_dashboard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AjoutAirport.resx">
+      <DependentUpon>AjoutAirport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="AjoutUser.resx">
       <DependentUpon>AjoutUser.cs</DependentUpon>
@@ -211,7 +236,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Content Include="assets\avio.png" />
     <Content Include="assets\avion.png" />
@@ -225,6 +249,16 @@
     <Content Include="assets\teamwork.png" />
     <Content Include="assets\users-solid.svg" />
     <Content Include="assets\user_group.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="AjoutAirportWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UpdateAirport.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

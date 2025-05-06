@@ -1,23 +1,91 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AvionManagment
 {
     public partial class AdminMainForm : Form
     {
+        // Référence aux panneaux que nous allons afficher
+        private adminPanel adminPanelControl;
+        private Tableau_aeroport tableauAeroportControl;
+
         public AdminMainForm()
         {
             InitializeComponent();
             TopBar.BackColor = Color.FromArgb(3, 14, 28);
             Sidebar.BackColor = Color.FromArgb(0, 16, 36);
             dashboardBtn.BackColor = Color.FromArgb(0, 16, 36);
+
+            // Initialiser les contrôles
+            InitializePanels();
+
+            // Afficher le panneau Dashboard par défaut
+            ShowDashboard();
+        }
+
+        private void InitializePanels()
+        {
+            // Créer les instances des contrôles
+            adminPanelControl = new adminPanel();
+            tableauAeroportControl = new Tableau_aeroport();
+
+            // Configurer les contrôles pour qu'ils remplissent le contentPanel
+            adminPanelControl.Dock = DockStyle.Fill;
+            tableauAeroportControl.Dock = DockStyle.Fill;
+
+            // Ne pas les ajouter tout de suite au contentPanel
+        }
+
+        private void ClearContentPanel()
+        {
+            // Supprimer tous les contrôles du contentPanel
+            contentPanel.Controls.Clear();
+        }
+
+        private void ShowDashboard()
+        {
+            // Mettre en évidence le bouton sélectionné
+            ResetButtonColors();
+            dashboardBtn.BackColor = Color.FromArgb(0, 26, 56); // Couleur plus foncée pour indiquer la sélection
+
+            // Afficher le panneau d'administration
+            ClearContentPanel();
+            contentPanel.Controls.Add(adminPanelControl);
+            adminPanelControl.BringToFront();
+        }
+
+        private void ShowUserPanel()
+        {
+            // Mettre en évidence le bouton sélectionné
+            ResetButtonColors();
+            UserMenuBtn.BackColor = Color.FromArgb(0, 26, 56); // Couleur plus foncée pour indiquer la sélection
+
+            // Afficher le panneau d'administration
+            ClearContentPanel();
+            contentPanel.Controls.Add(adminPanelControl);
+            adminPanelControl.BringToFront();
+        }
+
+        private void ShowAeroportPanel()
+        {
+            // Mettre en évidence le bouton sélectionné
+            ResetButtonColors();
+            AeroportMenuBtn.BackColor = Color.FromArgb(0, 26, 56); // Couleur plus foncée pour indiquer la sélection
+
+            // Afficher le tableau des aéroports
+            ClearContentPanel();
+            contentPanel.Controls.Add(tableauAeroportControl);
+            tableauAeroportControl.BringToFront();
+        }
+
+        private void ResetButtonColors()
+        {
+            // Réinitialiser la couleur de tous les boutons du menu
+            dashboardBtn.BackColor = Color.FromArgb(0, 16, 36);
+            UserMenuBtn.BackColor = Color.FromArgb(0, 16, 36);
+            AeroportMenuBtn.BackColor = Color.FromArgb(0, 16, 36);
+            // Ajoutez ici les autres boutons si nécessaire
         }
 
         private void fermer_Click(object sender, EventArgs e)
@@ -27,12 +95,43 @@ namespace AvionManagment
 
         private void DeconnectionBtn_Click(object sender, EventArgs e)
         {
-            if(MessageBox.Show("Voulez-vous vraiment vous déconnecter?", "Déconnexion", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (MessageBox.Show("Voulez-vous vraiment vous déconnecter?", "Déconnexion", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 this.Hide();
                 Form1 loginForm = new Form1();
                 loginForm.Show();
             }
+        }
+
+        // Gestionnaires d'événements pour les boutons du menu
+        private void dashboardBtn_Click(object sender, EventArgs e)
+        {
+            ShowDashboard();
+        }
+
+        private void UserMenuBtn_Click(object sender, EventArgs e)
+        {
+            ShowUserPanel();
+        }
+
+        private void AeroportMenuBtn_Click(object sender, EventArgs e)
+        {
+            ShowAeroportPanel();
+        }
+
+        private void AeroportMenuBtn_Click_1(object sender, EventArgs e)
+        {
+            ShowAeroportPanel();
+        }
+
+        private void UserMenuBtn_Click_1(object sender, EventArgs e)
+        {
+            ShowDashboard();
+        }
+
+        private void dashboardBtn_Click_1(object sender, EventArgs e)
+        {
+            ShowDashboard();
         }
     }
 }

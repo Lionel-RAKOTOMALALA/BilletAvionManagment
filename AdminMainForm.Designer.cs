@@ -43,7 +43,7 @@
             this.dashboardBtn = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.admin_dashboard1 = new AvionManagment.admin_dashboard();
+            this.contentPanel = new System.Windows.Forms.Panel();
             this.TopBar.SuspendLayout();
             this.Sidebar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -206,6 +206,7 @@
             this.AeroportMenuBtn.TabIndex = 3;
             this.AeroportMenuBtn.Text = "Aeroport";
             this.AeroportMenuBtn.UseVisualStyleBackColor = true;
+            this.AeroportMenuBtn.Click += new System.EventHandler(this.AeroportMenuBtn_Click_1);
             // 
             // UserMenuBtn
             // 
@@ -221,6 +222,7 @@
             this.UserMenuBtn.TabIndex = 3;
             this.UserMenuBtn.Text = "Utilisateur";
             this.UserMenuBtn.UseVisualStyleBackColor = true;
+            this.UserMenuBtn.Click += new System.EventHandler(this.UserMenuBtn_Click_1);
             // 
             // dashboardBtn
             // 
@@ -236,6 +238,7 @@
             this.dashboardBtn.TabIndex = 3;
             this.dashboardBtn.Text = "Dashboard";
             this.dashboardBtn.UseVisualStyleBackColor = true;
+            this.dashboardBtn.Click += new System.EventHandler(this.dashboardBtn_Click_1);
             // 
             // label2
             // 
@@ -257,19 +260,20 @@
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
-            // admin_dashboard1
+            // contentPanel
             // 
-            this.admin_dashboard1.Location = new System.Drawing.Point(207, 39);
-            this.admin_dashboard1.Name = "admin_dashboard1";
-            this.admin_dashboard1.Size = new System.Drawing.Size(857, 678);
-            this.admin_dashboard1.TabIndex = 2;
+            this.contentPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.contentPanel.Location = new System.Drawing.Point(208, 39);
+            this.contentPanel.Name = "contentPanel";
+            this.contentPanel.Size = new System.Drawing.Size(859, 683);
+            this.contentPanel.TabIndex = 2;
             // 
             // AdminMainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1067, 722);
-            this.Controls.Add(this.admin_dashboard1);
+            this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.Sidebar);
             this.Controls.Add(this.TopBar);
             this.ForeColor = System.Drawing.Color.White;
@@ -303,6 +307,6 @@
         private System.Windows.Forms.Button VolMenuBtn;
         private System.Windows.Forms.Button AvionMenuBtn;
         private System.Windows.Forms.Button AeroportMenuBtn;
-        private admin_dashboard admin_dashboard1;
+        private System.Windows.Forms.Panel contentPanel;
     }
 }
