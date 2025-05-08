@@ -108,8 +108,6 @@
             // 
             this.PaiementMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.PaiementMenuBtn.FlatAppearance.BorderSize = 0;
-            this.PaiementMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.PaiementMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.PaiementMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.PaiementMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.PaiementMenuBtn.Location = new System.Drawing.Point(0, 497);
@@ -136,8 +134,6 @@
             // 
             this.BilletMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BilletMenuBtn.FlatAppearance.BorderSize = 0;
-            this.BilletMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.BilletMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.BilletMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BilletMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BilletMenuBtn.Location = new System.Drawing.Point(0, 559);
@@ -151,8 +147,6 @@
             // 
             this.ReservationMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ReservationMenuBtn.FlatAppearance.BorderSize = 0;
-            this.ReservationMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.ReservationMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.ReservationMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ReservationMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ReservationMenuBtn.Location = new System.Drawing.Point(0, 429);
@@ -161,13 +155,12 @@
             this.ReservationMenuBtn.TabIndex = 3;
             this.ReservationMenuBtn.Text = "Réservation";
             this.ReservationMenuBtn.UseVisualStyleBackColor = true;
+            this.ReservationMenuBtn.Click += new System.EventHandler(this.ReservationMenuBtn_Click_1);
             // 
             // VolMenuBtn
             // 
             this.VolMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.VolMenuBtn.FlatAppearance.BorderSize = 0;
-            this.VolMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.VolMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.VolMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.VolMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.VolMenuBtn.Location = new System.Drawing.Point(0, 369);
@@ -176,13 +169,12 @@
             this.VolMenuBtn.TabIndex = 3;
             this.VolMenuBtn.Text = "Vol";
             this.VolMenuBtn.UseVisualStyleBackColor = true;
+            this.VolMenuBtn.Click += new System.EventHandler(this.VolMenuBtn_Click);
             // 
             // AvionMenuBtn
             // 
             this.AvionMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.AvionMenuBtn.FlatAppearance.BorderSize = 0;
-            this.AvionMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.AvionMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.AvionMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.AvionMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AvionMenuBtn.Location = new System.Drawing.Point(0, 310);
@@ -197,8 +189,6 @@
             // 
             this.AeroportMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.AeroportMenuBtn.FlatAppearance.BorderSize = 0;
-            this.AeroportMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.AeroportMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.AeroportMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.AeroportMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AeroportMenuBtn.Location = new System.Drawing.Point(0, 246);
@@ -213,8 +203,6 @@
             // 
             this.UserMenuBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.UserMenuBtn.FlatAppearance.BorderSize = 0;
-            this.UserMenuBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.UserMenuBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.UserMenuBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.UserMenuBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.UserMenuBtn.Location = new System.Drawing.Point(0, 184);
@@ -229,8 +217,6 @@
             // 
             this.dashboardBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.dashboardBtn.FlatAppearance.BorderSize = 0;
-            this.dashboardBtn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
-            this.dashboardBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(121)))), ((int)(((byte)(187)))), ((int)(((byte)(255)))));
             this.dashboardBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.dashboardBtn.Font = new System.Drawing.Font("Arial Rounded MT Bold", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dashboardBtn.Location = new System.Drawing.Point(0, 126);
@@ -248,9 +234,8 @@
             this.label2.Font = new System.Drawing.Font("Arial Rounded MT Bold", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.Location = new System.Drawing.Point(46, 81);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(111, 15);
+            this.label2.Size = new System.Drawing.Size(0, 15);
             this.label2.TabIndex = 2;
-            this.label2.Text = "Bienvenu à vous";
             // 
             // pictureBox1
             // 

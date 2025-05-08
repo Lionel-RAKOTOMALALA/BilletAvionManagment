@@ -120,3 +120,7 @@ E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AjoutAvionW
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\UpdateAvionWindow.baml
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AjoutAvionWindow.g.cs
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\UpdateAvionWindow.g.cs
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AjoutVolWindow.baml
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AjoutVolWindow.g.cs
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\UpdateVolWindow.baml
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\UpdateVolWindow.g.cs

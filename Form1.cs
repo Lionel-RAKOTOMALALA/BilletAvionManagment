@@ -96,14 +96,30 @@ namespace AvionManagment
                         }
                     }
 
-                    // Étape 3 : Connexion réussie
-                    MessageBox.Show("Connexion réussie !", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                   
-                    // Afficher Form1 et fermer RegistrationForm
-                    AdminMainForm form = new AdminMainForm();
-                    form.Show();
-                    this.Hide();
-          
+                    // Étape 3 : Récupérer les informations de l'utilisateur
+                    string userInfoQuery = "SELECT id_user, username, role FROM utilisateur WHERE username = @username";
+                    using (MySqlCommand userInfoCommand = new MySqlCommand(userInfoQuery, connection))
+                    {
+                        userInfoCommand.Parameters.AddWithValue("@username", usernameValue);
+
+                        using (MySqlDataReader reader = userInfoCommand.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                int id_user = reader.GetInt32("id_user");
+                                string username = reader.GetString("username");
+                                string role = reader.GetString("role");
+
+                                // Étape 4 : Connexion réussie
+                                MessageBox.Show("Connexion réussie !", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                // Passer les données utilisateur à AdminMainForm
+                                AdminMainForm form = new AdminMainForm(id_user, username, role);
+                                form.Show();
+                                this.Hide();
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
