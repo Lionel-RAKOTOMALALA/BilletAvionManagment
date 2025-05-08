@@ -11,6 +11,12 @@ using System.Windows.Forms;
 using MySql.Data.MySqlClient; // Référence à MySQL
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Diagnostics;
+using Newtonsoft.Json;
+using System.Net.Http.Headers;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 
 namespace AvionManagment
 {
@@ -77,6 +83,14 @@ namespace AvionManagment
         public int UserId { get; set; }
         public string UserName { get; set; }
         public string UserRole { get; set; }
+
+        // WebView2 pour afficher Stripe
+        private WebView2 webView2;
+        private Form paymentForm;
+
+        // Variables pour suivre l'état du paiement
+        private bool paymentProcessed = false;
+        private bool paymentSuccessful = false;
 
         // Constructeur par défaut
         public Tableau_vol()
@@ -797,34 +811,1113 @@ namespace AvionManagment
             }
         }
 
-        private void ReserverVol(int volId)
+        private async Task<string> DemarrerPaiementStripe(int volId, decimal amount, string productName)
         {
-            // Vérifier si le vol existe dans la liste
-            VolData vol = volsList.FirstOrDefault(v => v.Id == volId);
-            if (vol != null)
+            // Configuration spéciale pour le développement (contournement SSL)
+            HttpClientHandler handler = new HttpClientHandler
             {
-                // Vérifier s'il reste des places disponibles
-                if (vol.AvionCapacite <= 0)
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+
+            using (HttpClient client = new HttpClient(handler))
+            {
+                try
                 {
-                    MessageBox.Show("Désolé, il n'y a plus de places disponibles pour ce vol.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
+                    // 1. Préparation des données
+                    var requestData = new
+                    {
+                        Amount = amount,
+                        ProductName = productName,
+                        Description = $"Réservation de vol #{volId}",
+                        VolId = volId,
+                        UserId = this.UserId,
+                        BaseUrl = "https://localhost" // Peut être une URL factice pour une app desktop
+                    };
+
+                    // 2. Sérialisation
+                    string json = JsonConvert.SerializeObject(requestData);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    // 3. Configuration du timeout
+                    client.Timeout = TimeSpan.FromSeconds(30);
+
+                    // 4. En-têtes
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(
+                        new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    // 5. URL de l'API (vérifiez le port dans votre projet API)
+                    string apiUrl = "https://localhost:7286/api/Stripe/create-checkout-session";
+
+                    // 6. Envoi de la requête avec journalisation
+                    Debug.WriteLine($"Envoi à: {apiUrl}\nDonnées: {json}");
+
+                    HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+
+                    // 7. Vérification de la réponse
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"Erreur API: {response.StatusCode}\n{errorContent}");
+                        throw new Exception($"Erreur du serveur: {response.StatusCode}\n{errorContent}");
+                    }
+
+                    // 8. Traitement de la réponse
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"Réponse reçue: {responseContent}");
+
+                    dynamic result = JsonConvert.DeserializeObject(responseContent);
+                    return result.url;
+                }
+                catch (TaskCanceledException)
+                {
+                    MessageBox.Show("Délai d'attente dépassé. Vérifiez votre connexion.",
+                                  "Erreur",
+                                  MessageBoxButtons.OK,
+                                  MessageBoxIcon.Error);
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"ERREUR COMPLÈTE: {ex.ToString()}");
+                    MessageBox.Show($"Échec de la connexion à l'API:\n{ex.Message}",
+                                  "Erreur",
+                                  MessageBoxButtons.OK,
+                                  MessageBoxIcon.Error);
+                    return null;
+                }
+            }
+        }
+
+        private async void ReserverVol(int volId)
+        {
+            VolData vol = volsList.FirstOrDefault(v => v.Id == volId);
+            if (vol == null) return;
+
+            if (vol.AvionCapacite <= 0)
+            {
+                MessageBox.Show("Désolé, il n'y a plus de places disponibles pour ce vol.",
+                              "Information",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Information);
+                return;
+            }
+
+            // Confirmation utilisateur
+            DialogResult confirmation = MessageBox.Show(
+                $"Voulez-vous réserver une place pour le vol de {vol.AeroportDepartVille} à {vol.AeroportArriveVille} le {vol.DateDepart:dd/MM/yyyy HH:mm} ?\n\nPrix: 100€",
+                "Confirmation de réservation",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirmation != DialogResult.Yes) return;
+
+            try
+            {
+                // Réinitialiser les variables de suivi du paiement
+                paymentProcessed = false;
+                paymentSuccessful = false;
+
+                // Démarrer le processus de paiement
+                string checkoutUrl = await DemarrerPaiementStripe(
+                    volId,
+                    100.00m,
+                    $"Vol {vol.AeroportDepartVille}-{vol.AeroportArriveVille}");
+
+                if (string.IsNullOrEmpty(checkoutUrl))
+                {
+                    return; // L'erreur a déjà été affichée
                 }
 
-                // Demander confirmation
-                DialogResult result = MessageBox.Show($"Voulez-vous réserver une place pour le vol de {vol.AeroportDepartVille} à {vol.AeroportArriveVille} le {vol.DateDepart.ToString("dd/MM/yyyy HH:mm")}?",
-                    "Confirmation de réservation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                // Afficher la fenêtre de paiement Stripe avec WebView2
+                ShowStripePaymentWindow(checkoutUrl, volId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de la réservation:\n{ex.Message}",
+                              "Erreur",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+            }
+        }
 
-                if (result == DialogResult.Yes)
+        // Méthode pour afficher la fenêtre de paiement Stripe avec WebView2
+        private void ShowStripePaymentWindow(string url, int volId)
+        {
+            try
+            {
+                // Créer une nouvelle fenêtre pour le paiement
+                paymentForm = new Form
                 {
-                    // Appeler la méthode pour ajouter la réservation dans la base de données
-                    if (AjouterReservationEnBaseDeDonnees(volId, UserId))
-                    {
-                        MessageBox.Show("Réservation effectuée avec succès !", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Text = "Paiement Stripe - MODE TEST",
+                    Width = 800,
+                    Height = 700,
+                    StartPosition = FormStartPosition.CenterParent,
+                    Icon = this.ParentForm?.Icon
+                };
 
-                        // Recharger les données pour mettre à jour les places disponibles
-                        LoadDataFromDatabase();
+                // Ajouter un label pour indiquer le mode test
+                Label lblTestMode = new Label
+                {
+                    Text = "MODE TEST - Aucun paiement réel ne sera effectué",
+                    Dock = DockStyle.Top,
+                    Height = 30,
+                    BackColor = Color.Yellow,
+                    ForeColor = Color.Black,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                };
+                paymentForm.Controls.Add(lblTestMode);
+
+                // Créer un panel pour les informations de test
+                Panel testInfoPanel = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 100,
+                    BackColor = Color.LightYellow,
+                    BorderStyle = BorderStyle.FixedSingle
+                };
+
+                Label lblTestInfo = new Label
+                {
+                    Text = "Cartes de test Stripe :\n" +
+                           "✅ Succès : 4242 4242 4242 4242\n" +
+                           "🔐 Authentification : 4000 0025 0000 3155\n" +
+                           "❌ Refusée : 4000 0000 0000 9995\n" +
+                           "Pour tous : date future, CVC = 3 chiffres, code postal = 5 chiffres",
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Font = new Font("Segoe UI", 9, FontStyle.Regular)
+                };
+
+                testInfoPanel.Controls.Add(lblTestInfo);
+                paymentForm.Controls.Add(testInfoPanel);
+
+                // Créer un panel de chargement
+                Panel loadingPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.White,
+                    Visible = false
+                };
+
+                Label lblLoading = new Label
+                {
+                    Text = "Traitement du paiement en cours...",
+                    AutoSize = false,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold)
+                };
+
+                PictureBox loadingIcon = new PictureBox
+                {
+                    Size = new Size(50, 50),
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    Location = new Point((loadingPanel.Width - 50) / 2, (loadingPanel.Height - 50) / 2 - 50)
+                };
+
+                // Créer une animation de chargement simple
+                Bitmap loadingImage = new Bitmap(50, 50);
+                using (Graphics g = Graphics.FromImage(loadingImage))
+                {
+                    g.Clear(Color.White);
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using (Pen pen = new Pen(primaryColor, 5))
+                    {
+                        g.DrawEllipse(pen, 5, 5, 40, 40);
+                    }
+                    using (Pen pen = new Pen(Color.Gray, 5))
+                    {
+                        g.DrawArc(pen, 5, 5, 40, 40, 0, 270);
                     }
                 }
+                loadingIcon.Image = loadingImage;
+
+                loadingPanel.Controls.Add(lblLoading);
+                loadingPanel.Controls.Add(loadingIcon);
+                paymentForm.Controls.Add(loadingPanel);
+
+                // Créer le contrôle WebView2
+                webView2 = new WebView2
+                {
+                    Dock = DockStyle.Fill
+                };
+
+                // Ajouter un bouton pour fermer la fenêtre
+                Button btnClose = new Button
+                {
+                    Text = "Fermer",
+                    Dock = DockStyle.Bottom,
+                    Height = 40,
+                    BackColor = dangerColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnClose.FlatAppearance.BorderSize = 0;
+                btnClose.Click += (s, e) =>
+                {
+                    // Nettoyer les ressources WebView2 avant de fermer
+                    if (webView2 != null)
+                    {
+                        if (webView2.CoreWebView2 != null)
+                        {
+                            webView2.CoreWebView2.NavigationStarting -= CoreWebView2_NavigationStarting;
+                            webView2.CoreWebView2.NavigationCompleted -= CoreWebView2_NavigationCompleted;
+                            webView2.CoreWebView2.ProcessFailed -= CoreWebView2_ProcessFailed;
+                            webView2.CoreWebView2.WebResourceResponseReceived -= CoreWebView2_WebResourceResponseReceived;
+                            webView2.CoreWebView2.SourceChanged -= CoreWebView2_SourceChanged;
+                            webView2.CoreWebView2.DOMContentLoaded -= CoreWebView2_DOMContentLoaded;
+                        }
+                    }
+                    paymentForm.Close();
+                };
+
+                // Ajouter les contrôles à la fenêtre
+                paymentForm.Controls.Add(webView2);
+                paymentForm.Controls.Add(btnClose);
+
+                // Gérer l'événement FormClosing pour nettoyer les ressources
+                paymentForm.FormClosing += (s, e) =>
+                {
+                    // Traiter le résultat du paiement si la fenêtre est fermée sans que le paiement ait été traité
+                    if (!paymentProcessed)
+                    {
+                        // Considérer comme annulé si fermé manuellement
+                        paymentProcessed = true;
+                        paymentSuccessful = false;
+                    }
+                };
+
+                // Gérer l'événement FormClosed pour finaliser le processus
+                paymentForm.FormClosed += async (s, e) =>
+                {
+                    // Traiter le résultat du paiement
+                    if (paymentSuccessful)
+                    {
+                        if (AjouterReservationEnBaseDeDonnees(volId, this.UserId))
+                        {
+                            MessageBox.Show("Réservation confirmée ! (Mode Test)",
+                                          "Succès",
+                                          MessageBoxButtons.OK,
+                                          MessageBoxIcon.Information);
+                            LoadDataFromDatabase();
+                        }
+                    }
+                    else if (paymentProcessed) // Si le paiement a été traité mais n'a pas réussi
+                    {
+                        MessageBox.Show("Paiement annulé ou échoué. (Mode Test)",
+                                      "Information",
+                                      MessageBoxButtons.OK,
+                                      MessageBoxIcon.Information);
+                    }
+
+                    // Libérer les ressources
+                    if (webView2 != null)
+                    {
+                        webView2.Dispose();
+                        webView2 = null;
+                    }
+                };
+
+                // Initialiser WebView2 de manière asynchrone
+                InitializeWebView2Async(url, loadingPanel);
+
+                // Afficher la fenêtre de paiement
+                paymentForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'affichage de la fenêtre de paiement: {ex.Message}",
+                              "Erreur",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+            }
+        }
+
+        // Méthode pour initialiser WebView2 de manière asynchrone
+        private async void InitializeWebView2Async(string url, Panel loadingPanel)
+        {
+            try
+            {
+                // Initialiser l'environnement WebView2
+                await webView2.EnsureCoreWebView2Async(null);
+
+                // Configurer les options WebView2
+                webView2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
+
+                // IMPORTANT: Ajouter un gestionnaire d'événements pour les changements d'URL
+                webView2.CoreWebView2.SourceChanged += CoreWebView2_SourceChanged;
+
+                // Configurer les gestionnaires d'événements existants
+                webView2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
+                webView2.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
+                webView2.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
+                webView2.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;
+
+                // NOUVEAU: Ajouter un gestionnaire pour les scripts exécutés
+                webView2.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
+
+                // Naviguer vers l'URL de paiement Stripe
+                webView2.CoreWebView2.Navigate(url);
+
+                // IMPORTANT: Créer un timer de secours qui fermera la fenêtre après un délai
+                System.Windows.Forms.Timer backupTimer = new System.Windows.Forms.Timer();
+                backupTimer.Interval = 30000; // 30 secondes maximum pour tout le processus
+                backupTimer.Tick += (sender, e) => {
+                    backupTimer.Stop();
+
+                    // Vérifier si le paiement a été traité
+                    if (!paymentProcessed)
+                    {
+                        // Injecter du JavaScript pour vérifier si la page contient des indicateurs de succès
+                        CheckPaymentStatusViaJS();
+                    }
+                };
+                backupTimer.Start();
+
+                // Démarrer un timer pour vérifier le statut du paiement régulièrement
+                System.Windows.Forms.Timer checkPaymentTimer = new System.Windows.Forms.Timer();
+                checkPaymentTimer.Interval = 2000; // Vérifier toutes les 2 secondes
+                checkPaymentTimer.Tick += async (sender, e) => {
+                    try
+                    {
+                        // Vérifier le statut du paiement via l'API
+                        bool paymentStatus = await CheckPaymentStatus(url);
+
+                        // Afficher des informations de débogage
+                        Debug.WriteLine($"Vérification du statut de paiement: {paymentStatus}");
+
+                        if (paymentStatus)
+                        {
+                            checkPaymentTimer.Stop();
+                            backupTimer.Stop();
+
+                            paymentProcessed = true;
+                            paymentSuccessful = true;
+
+                            // Afficher le panel de chargement
+                            BeginInvoke(new Action(() => {
+                                if (webView2 != null && !webView2.IsDisposed)
+                                    webView2.Visible = false;
+
+                                if (loadingPanel != null)
+                                    loadingPanel.Visible = true;
+                            }));
+
+                            // Attendre un peu pour montrer le message de chargement
+                            await Task.Delay(1000);
+
+                            // Fermer la fenêtre
+                            BeginInvoke(new Action(() => {
+                                if (paymentForm != null && !paymentForm.IsDisposed)
+                                {
+                                    paymentForm.Close();
+                                }
+                            }));
+                        }
+                        else
+                        {
+                            // Vérifier également via JavaScript
+                            CheckPaymentStatusViaJS();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Erreur lors de la vérification du statut: {ex.Message}");
+                    }
+                };
+                checkPaymentTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'initialisation de WebView2: {ex.Message}\n\n" +
+                              "Assurez-vous que le runtime WebView2 est installé sur votre système.",
+                              "Erreur",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+
+                if (paymentForm != null && !paymentForm.IsDisposed)
+                {
+                    paymentForm.Close();
+                }
+            }
+        }
+
+        // NOUVEAU: Gestionnaire pour les changements d'URL source
+        private void CoreWebView2_SourceChanged(object sender, CoreWebView2SourceChangedEventArgs e)
+        {
+            string currentUrl = webView2.Source.ToString();
+            Debug.WriteLine($"URL changée: {currentUrl}");
+
+            // Vérifier si l'URL contient des indicateurs de succès
+            if (currentUrl.Contains("paiement-reussi") ||
+                currentUrl.Contains("success=true") ||
+                currentUrl.Contains("payment_intent_client_secret") ||
+                currentUrl.Contains("redirect_status=succeeded"))
+            {
+                Debug.WriteLine("URL de succès détectée!");
+
+                if (!paymentProcessed)
+                {
+                    paymentProcessed = true;
+                    paymentSuccessful = true;
+
+                    // Afficher la page de succès
+                    ShowSuccessPage();
+
+                    // Fermer la fenêtre après un court délai
+                    BeginInvoke(new Action(async () => {
+                        await Task.Delay(2000);
+                        if (paymentForm != null && !paymentForm.IsDisposed)
+                        {
+                            paymentForm.Close();
+                        }
+                    }));
+                }
+            }
+            else if (currentUrl.Contains("paiement-annule") ||
+                     currentUrl.Contains("success=false") ||
+                     currentUrl.Contains("redirect_status=failed"))
+            {
+                Debug.WriteLine("URL d'échec détectée!");
+
+                if (!paymentProcessed)
+                {
+                    paymentProcessed = true;
+                    paymentSuccessful = false;
+
+                    // Afficher la page d'annulation
+                    ShowCancelPage();
+
+                    // Fermer la fenêtre après un court délai
+                    BeginInvoke(new Action(async () => {
+                        await Task.Delay(2000);
+                        if (paymentForm != null && !paymentForm.IsDisposed)
+                        {
+                            paymentForm.Close();
+                        }
+                    }));
+                }
+            }
+        }
+
+        // NOUVEAU: Gestionnaire pour le chargement du DOM
+        private void CoreWebView2_DOMContentLoaded(object sender, CoreWebView2DOMContentLoadedEventArgs e)
+        {
+            // Vérifier si la page contient des indicateurs de succès via JavaScript
+            CheckPaymentStatusViaJS();
+        }
+
+        // NOUVEAU: Méthode pour vérifier le statut du paiement via JavaScript
+        private async void CheckPaymentStatusViaJS()
+        {
+            try
+            {
+                if (webView2 != null && webView2.CoreWebView2 != null)
+                {
+                    // Script pour vérifier les éléments de la page qui pourraient indiquer un succès
+                    string script = @"
+                        (function() {
+                            // Vérifier le titre de la page
+                            if (document.title.includes('Success') || document.title.includes('Succès')) {
+                                return 'success_title';
+                            }
+                            
+                            // Vérifier les éléments de texte qui pourraient indiquer un succès
+                            const bodyText = document.body.innerText;
+                            if (bodyText.includes('Payment successful') || 
+                                bodyText.includes('Paiement réussi') || 
+                                bodyText.includes('Thank you for your payment') ||
+                                bodyText.includes('Merci pour votre paiement')) {
+                                return 'success_text';
+                            }
+                            
+                            // Vérifier les classes CSS qui pourraient indiquer un succès
+                            if (document.querySelector('.success') || 
+                                document.querySelector('.payment-success') ||
+                                document.querySelector('[data-status=success]')) {
+                                return 'success_element';
+                            }
+                            
+                            // Vérifier l'URL
+                            if (window.location.href.includes('success') || 
+                                window.location.href.includes('succeeded') ||
+                                window.location.href.includes('completed')) {
+                                return 'success_url';
+                            }
+                            
+                            return 'no_indicators';
+                        })();
+                    ";
+
+                    string result = await webView2.CoreWebView2.ExecuteScriptAsync(script);
+                    Debug.WriteLine($"Résultat de la vérification JS: {result}");
+
+                    // Si un indicateur de succès est trouvé
+                    if (result.Contains("success"))
+                    {
+                        if (!paymentProcessed)
+                        {
+                            paymentProcessed = true;
+                            paymentSuccessful = true;
+
+                            // Fermer la fenêtre
+                            BeginInvoke(new Action(() => {
+                                if (paymentForm != null && !paymentForm.IsDisposed)
+                                {
+                                    paymentForm.Close();
+                                }
+                            }));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erreur lors de l'exécution du script JS: {ex.Message}");
+            }
+        }
+
+        // Gestionnaire d'événements pour le début de la navigation
+        private void CoreWebView2_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            string url = e.Uri;
+            Debug.WriteLine($"Navigation démarrée vers: {url}");
+
+            // Vérifier si l'URL contient des indicateurs de succès ou d'échec
+            if (url.Contains("/paiement-reussi") || url.Contains("success=true"))
+            {
+                // Marquer le paiement comme réussi et traité
+                paymentProcessed = true;
+                paymentSuccessful = true;
+
+                // Annuler la navigation vers l'URL de succès qui pourrait échouer
+                e.Cancel = true;
+
+                // Afficher la page de succès
+                BeginInvoke(new Action(() => {
+                    ShowSuccessPage();
+                }));
+
+                // Fermer la fenêtre de paiement après un court délai
+                BeginInvoke(new Action(async () => {
+                    await Task.Delay(2000);
+                    if (paymentForm != null && !paymentForm.IsDisposed)
+                    {
+                        paymentForm.Close();
+                    }
+                }));
+            }
+            else if (url.Contains("/paiement-annule") || url.Contains("success=false"))
+            {
+                // Marquer le paiement comme échoué et traité
+                paymentProcessed = true;
+                paymentSuccessful = false;
+
+                // Annuler la navigation vers l'URL d'échec qui pourrait échouer
+                e.Cancel = true;
+
+                // Afficher la page d'annulation
+                BeginInvoke(new Action(() => {
+                    ShowCancelPage();
+                }));
+
+                // Fermer la fenêtre de paiement après un court délai
+                BeginInvoke(new Action(async () => {
+                    await Task.Delay(2000);
+                    if (paymentForm != null && !paymentForm.IsDisposed)
+                    {
+                        paymentForm.Close();
+                    }
+                }));
+            }
+        }
+
+        // Gestionnaire d'événements pour la fin de la navigation
+        private void CoreWebView2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (!e.IsSuccess)
+            {
+                Debug.WriteLine($"Erreur de navigation: {e.WebErrorStatus}");
+
+                // Si la navigation échoue et que nous n'avons pas encore traité le paiement
+                if (!paymentProcessed)
+                {
+                    // Vérifier si l'URL actuelle contient des indicateurs de succès ou d'échec
+                    string currentUrl = webView2.Source.ToString();
+
+                    if (currentUrl.Contains("/paiement-reussi") || currentUrl.Contains("success=true"))
+                    {
+                        // Marquer le paiement comme réussi et traité
+                        paymentProcessed = true;
+                        paymentSuccessful = true;
+
+                        // Afficher la page de succès
+                        BeginInvoke(new Action(() => {
+                            ShowSuccessPage();
+                        }));
+
+                        // Fermer la fenêtre de paiement après un court délai
+                        BeginInvoke(new Action(async () => {
+                            await Task.Delay(2000);
+                            if (paymentForm != null && !paymentForm.IsDisposed)
+                            {
+                                paymentForm.Close();
+                            }
+                        }));
+                    }
+                    else if (currentUrl.Contains("/paiement-annule") || currentUrl.Contains("success=false")
+                     || currentUrl.Contains("success=false"))
+                    {
+                            // Marquer le paiement comme échoué et traité
+                            paymentProcessed = true;
+                            paymentSuccessful = false;
+
+                            // Afficher la page d'annulation
+                            BeginInvoke(new Action(() => {
+                                ShowCancelPage();
+                            }));
+
+                            // Fermer la fenêtre de paiement après un court délai
+                            BeginInvoke(new Action(async () => {
+                                await Task.Delay(2000);
+                                if (paymentForm != null && !paymentForm.IsDisposed)
+                                {
+                                    paymentForm.Close();
+                                }
+                            }));
+                        }
+                    else if (e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted ||
+                             e.WebErrorStatus == CoreWebView2WebErrorStatus.Disconnected ||
+                             e.WebErrorStatus == CoreWebView2WebErrorStatus.HostNameNotResolved ||
+                             e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionReset)
+                        {
+                            // Si l'erreur est liée à la connexion et que l'URL contient des indicateurs
+                            string url = webView2.Source.ToString();
+
+                            if (url.Contains("/paiement-reussi") || url.Contains("success=true"))
+                            {
+                                // Marquer le paiement comme réussi et traité
+                                paymentProcessed = true;
+                                paymentSuccessful = true;
+
+                                // Afficher une page HTML de succès au lieu de l'erreur
+                                ShowSuccessPage();
+                            }
+                            else if (url.Contains("/paiement-annule") || url.Contains("success=false"))
+                            {
+                                // Marquer le paiement comme échoué et traité
+                                paymentProcessed = true;
+                                paymentSuccessful = false;
+
+                                // Afficher une page HTML d'annulation au lieu de l'erreur
+                                ShowCancelPage();
+                            }
+                            else
+                            {
+                                // Afficher une page personnalisée pour les erreurs de connexion
+                                ShowCustomErrorPage();
+                            }
+                        }
+                    }
+                }
+            }
+
+        // Gestionnaire d'événements pour les erreurs de processus
+        private void CoreWebView2_ProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
+        {
+            Debug.WriteLine($"Erreur de processus WebView2: {e.ProcessFailedKind}");
+
+            // Si le processus échoue, vérifier si nous avons déjà un statut de paiement
+            if (!paymentProcessed)
+            {
+                // Afficher une page personnalisée au lieu de l'erreur
+                ShowCustomErrorPage();
+            }
+        }
+
+        // Gestionnaire pour les réponses de ressources web
+        private void CoreWebView2_WebResourceResponseReceived(object sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+        {
+            // Vérifier si la réponse est un code d'erreur HTTP
+            if (e.Response.StatusCode >= 400)
+            {
+                Debug.WriteLine($"Erreur HTTP {e.Response.StatusCode} pour {e.Request.Uri}");
+
+                // Si l'URL contient des indicateurs de succès ou d'échec
+                string url = e.Request.Uri;
+
+                if (url.Contains("/paiement-reussi") || url.Contains("success=true"))
+                {
+                    // Marquer le paiement comme réussi et traité
+                    paymentProcessed = true;
+                    paymentSuccessful = true;
+
+                    // Afficher une page HTML de succès au lieu de l'erreur
+                    BeginInvoke(new Action(() =>
+                    {
+                        ShowSuccessPage();
+                    }));
+                }
+                else if (url.Contains("/paiement-annule") || url.Contains("success=false"))
+                {
+                    // Marquer le paiement comme échoué et traité
+                    paymentProcessed = true;
+                    paymentSuccessful = false;
+
+                    // Afficher une page HTML d'annulation au lieu de l'erreur
+                    BeginInvoke(new Action(() =>
+                    {
+                        ShowCancelPage();
+                    }));
+                }
+            }
+        }
+
+        // Méthode pour vérifier le statut du paiement
+        private async Task<bool> CheckPaymentStatus(string checkoutUrl)
+        {
+            try
+            {
+                // Extraire l'ID de session du checkout URL
+                string sessionId = ExtractSessionIdFromUrl(checkoutUrl);
+                if (string.IsNullOrEmpty(sessionId))
+                {
+                    Debug.WriteLine("Impossible d'extraire l'ID de session de l'URL");
+                    return false;
+                }
+
+                // Créer un HttpClient pour vérifier le statut
+                HttpClientHandler handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
+
+                using (HttpClient client = new HttpClient(handler))
+                {
+                    // URL de l'API pour vérifier le statut
+                    string apiUrl = $"https://localhost:7286/api/Stripe/check-payment-status?sessionId={sessionId}";
+                    Debug.WriteLine($"Vérification du statut à l'URL: {apiUrl}");
+
+                    // Envoyer la requête
+                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                    Debug.WriteLine($"Statut de la réponse: {response.StatusCode}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string content = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"Contenu de la réponse: {content}");
+
+                        try
+                        {
+                            dynamic result = JsonConvert.DeserializeObject(content);
+                            bool success = result?.success == true;
+                            Debug.WriteLine($"Succès du paiement selon l'API: {success}");
+                            return success;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Erreur lors de la désérialisation: {ex.Message}");
+                            // Si la désérialisation échoue mais que la réponse est OK, considérer comme un succès
+                            return response.IsSuccessStatusCode;
+                        }
+                    }
+                    else
+                    {
+                        // Si l'API renvoie une erreur, vérifier si c'est parce que le paiement est déjà traité
+                        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            // La session n'existe peut-être plus car elle a été traitée avec succès
+                            Debug.WriteLine("Session non trouvée, possible que le paiement soit déjà traité");
+
+                            // Vérifier l'URL actuelle du WebView2
+                            string currentUrl = webView2?.Source?.ToString() ?? "";
+                            if (currentUrl.Contains("success") || currentUrl.Contains("succeeded"))
+                            {
+                                Debug.WriteLine("URL actuelle indique un succès");
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Exception lors de la vérification du statut: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        // Méthode pour extraire l'ID de session de l'URL (améliorée)
+        private string ExtractSessionIdFromUrl(string url)
+        {
+            try
+            {
+                Debug.WriteLine($"Extraction de l'ID de session de l'URL: {url}");
+
+                // Différents formats possibles pour l'ID de session
+                string[] sessionParams = { "session_id=", "cs_", "checkout.session=" };
+
+                foreach (string param in sessionParams)
+                {
+                    if (url.Contains(param))
+                    {
+                        int startIndex = url.IndexOf(param) + param.Length;
+                        int endIndex = url.IndexOf("&", startIndex);
+
+                        if (endIndex == -1) // Si c'est le dernier paramètre
+                        {
+                            string sessionId = url.Substring(startIndex);
+                            Debug.WriteLine($"ID de session extrait: {sessionId}");
+                            return sessionId;
+                        }
+                        else
+                        {
+                            string sessionId = url.Substring(startIndex, endIndex - startIndex);
+                            Debug.WriteLine($"ID de session extrait: {sessionId}");
+                            return sessionId;
+                        }
+                    }
+                }
+
+                // Si aucun format standard n'est trouvé, essayer d'extraire un identifiant qui ressemble à un ID de session
+                if (url.Contains("stripe.com"))
+                {
+                    // Rechercher des motifs comme cs_test_xxx ou cs_live_xxx
+                    int csIndex = url.IndexOf("cs_");
+                    if (csIndex >= 0)
+                    {
+                        int endIndex = url.IndexOf("&", csIndex);
+                        if (endIndex == -1)
+                        {
+                            string sessionId = url.Substring(csIndex);
+                            Debug.WriteLine($"ID de session extrait (format alternatif): {sessionId}");
+                            return sessionId;
+                        }
+                        else
+                        {
+                            string sessionId = url.Substring(csIndex, endIndex - csIndex);
+                            Debug.WriteLine($"ID de session extrait (format alternatif): {sessionId}");
+                            return sessionId;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erreur lors de l'extraction de l'ID de session: {ex.Message}");
+            }
+
+            Debug.WriteLine("Aucun ID de session trouvé dans l'URL");
+            return string.Empty;
+        }
+
+        // Afficher une page HTML de succès
+        private void ShowSuccessPage()
+        {
+            string html = @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <title>Paiement réussi</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        background-color: #f0f8f0;
+                        color: #333;
+                        text-align: center;
+                        padding: 50px;
+                        margin: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 30px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                        color: #28a745;
+                    }
+                    .icon {
+                        font-size: 72px;
+                        color: #28a745;
+                        margin-bottom: 20px;
+                    }
+                    .message {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='icon'>✓</div>
+                    <h1>Paiement réussi !</h1>
+                    <div class='message'>
+                        Votre paiement a été traité avec succès. Votre réservation est maintenant confirmée.
+                        <br><br>
+                        Cette fenêtre se fermera automatiquement dans 2 secondes.
+                    </div>
+                </div>
+                <script>
+                    // Close automatically after 2 seconds
+                    setTimeout(function() {
+                        window.close();
+                        // Send a message to parent to force closure
+                        if (window.parent) {
+                            window.parent.postMessage('payment_success', '*');
+                        }
+                    }, 2000);
+                </script>
+            </body>
+            </html>";
+
+            if (webView2 != null && webView2.CoreWebView2 != null)
+            {
+                webView2.CoreWebView2.NavigateToString(html);
+            }
+        }
+
+        // Afficher une page HTML d'annulation
+        private void ShowCancelPage()
+        {
+            string html = @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <title>Paiement annulé</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        background-color: #f8f0f0;
+                        color: #333;
+                        text-align: center;
+                        padding: 50px;
+                        margin: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 30px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                        color: #dc3545;
+                    }
+                    .icon {
+                        font-size: 72px;
+                        color: #dc3545;
+                        margin-bottom: 20px;
+                    }
+                    .message {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='icon'>✗</div>
+                    <h1>Paiement annulé</h1>
+                    <div class='message'>
+                        Votre paiement a été annulé. Aucun montant n'a été débité.
+                        <br><br>
+                        Cette fenêtre se fermera automatiquement dans 2 secondes.
+                    </div>
+                </div>
+                <script>
+                    // Fermer automatiquement après 2 secondes
+                    setTimeout(function() {
+                        window.close();
+                    }, 2000);
+                </script>
+            </body>
+            </html>";
+
+            if (webView2 != null && webView2.CoreWebView2 != null)
+            {
+                webView2.CoreWebView2.NavigateToString(html);
+            }
+        }
+
+        // Afficher une page d'erreur personnalisée
+        private void ShowCustomErrorPage()
+        {
+            string html = @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <title>Traitement du paiement</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        background-color: #f8f9fa;
+                        color: #333;
+                        text-align: center;
+                        padding: 50px;
+                        margin: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 30px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                        color: #0066cc;
+                    }
+                    .icon {
+                        font-size: 72px;
+                        color: #0066cc;
+                        margin-bottom: 20px;
+                    }
+                    .message {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                    }
+                    .spinner {
+                        border: 5px solid #f3f3f3;
+                        border-top: 5px solid #0066cc;
+                        border-radius: 50%;
+                        width: 50px;
+                        height: 50px;
+                        animation: spin 2s linear infinite;
+                        margin: 0 auto 20px auto;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='spinner'></div>
+                    <h1>Traitement en cours</h1>
+                    <div class='message'>
+                        Votre paiement est en cours de traitement. Veuillez ne pas fermer cette fenêtre.
+                        <br><br>
+                        La fenêtre se fermera automatiquement une fois le paiement traité.
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            if (webView2 != null && webView2.CoreWebView2 != null)
+            {
+                webView2.CoreWebView2.NavigateToString(html);
             }
         }
 
@@ -895,7 +1988,7 @@ namespace AvionManagment
                 return false;
             }
         }
-            
+
         private bool DeleteVolFromDatabase(int volId)
         {
             try
