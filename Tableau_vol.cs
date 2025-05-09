@@ -38,6 +38,7 @@ namespace AvionManagment
             public string AeroportDepartVille { get; set; }
             public int AeroportArriveId { get; set; }
             public string AeroportArriveVille { get; set; }
+            public decimal Montant { get; set; } // Ajout du champ Montant
         }
 
         // Variables pour la pagination
@@ -265,7 +266,7 @@ namespace AvionManagment
                 CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
                 ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
                 EnableHeadersVisualStyles = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None, // Changé pour permettre un contrôle précis de la largeur
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, // Changé pour remplir l'espace disponible
                 RowTemplate = { Height = 40 }
             };
             this.Controls.Add(dataGridView);
@@ -361,7 +362,7 @@ namespace AvionManagment
             DataGridViewCheckBoxColumn checkColumn = new DataGridViewCheckBoxColumn
             {
                 HeaderText = "",
-                Width = 40,
+                Width = 30, // Réduit de 40 à 30
                 Name = "checkColumn"
             };
             dataGridView.Columns.Add(checkColumn);
@@ -371,7 +372,7 @@ namespace AvionManagment
             {
                 HeaderText = "ID",
                 Name = "Id",
-                Width = 50,
+                Width = 40, // Réduit de 50 à 40
                 ReadOnly = true
             };
             dataGridView.Columns.Add(idColumn);
@@ -381,7 +382,7 @@ namespace AvionManagment
             {
                 HeaderText = "Départ",
                 Name = "DateDepart",
-                Width = 130,
+                Width = 120, // Réduit de 130 à 120
                 ReadOnly = true
             };
             dataGridView.Columns.Add(dateDepartColumn);
@@ -391,7 +392,7 @@ namespace AvionManagment
             {
                 HeaderText = "Arrivée",
                 Name = "DateArrive",
-                Width = 130,
+                Width = 120, // Réduit de 130 à 120
                 ReadOnly = true
             };
             dataGridView.Columns.Add(dateArriveColumn);
@@ -401,7 +402,7 @@ namespace AvionManagment
             {
                 HeaderText = "Avion",
                 Name = "Avion",
-                Width = 100,
+                Width = 90, // Réduit de 100 à 90
                 ReadOnly = true
             };
             dataGridView.Columns.Add(avionColumn);
@@ -411,17 +412,27 @@ namespace AvionManagment
             {
                 HeaderText = "Places disponibles",
                 Name = "AvionCapacite",
-                Width = 120,
+                Width = 110, // Réduit de 120 à 110
                 ReadOnly = true
             };
             dataGridView.Columns.Add(avionCapacite);
+
+            // Colonne Prix
+            DataGridViewTextBoxColumn montantColumn = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Prix (€)",
+                Name = "Montant",
+                Width = 70, // Réduit de 80 à 70
+                ReadOnly = true
+            };
+            dataGridView.Columns.Add(montantColumn);
 
             // Colonne Aéroport de départ
             DataGridViewTextBoxColumn aeroportDepartColumn = new DataGridViewTextBoxColumn
             {
                 HeaderText = "De",
                 Name = "AeroportDepart",
-                Width = 80,
+                Width = 70, // Réduit de 80 à 70
                 ReadOnly = true
             };
             dataGridView.Columns.Add(aeroportDepartColumn);
@@ -431,7 +442,7 @@ namespace AvionManagment
             {
                 HeaderText = "À",
                 Name = "AeroportArrive",
-                Width = 80,
+                Width = 70, // Réduit de 80 à 70
                 ReadOnly = true
             };
             dataGridView.Columns.Add(aeroportArriveColumn);
@@ -441,7 +452,7 @@ namespace AvionManagment
             {
                 HeaderText = "Actions",
                 Name = "Actions",
-                Width = 100,
+                Width = 80, // Réduit de 100 à 80
                 ReadOnly = true,
                 ImageLayout = DataGridViewImageCellLayout.Zoom
             };
@@ -451,13 +462,13 @@ namespace AvionManagment
             dataGridView.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
             dataGridView.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
             dataGridView.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            dataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(10, 0, 0, 0);
+            dataGridView.ColumnHeadersDefaultCellStyle.Padding = new Padding(5, 0, 0, 0); // Réduit le padding de 10 à 5
             dataGridView.ColumnHeadersHeight = 40;
 
             dataGridView.DefaultCellStyle.BackColor = Color.White;
             dataGridView.DefaultCellStyle.ForeColor = Color.Black;
             dataGridView.DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Regular);
-            dataGridView.DefaultCellStyle.Padding = new Padding(10, 0, 0, 0);
+            dataGridView.DefaultCellStyle.Padding = new Padding(5, 0, 0, 0); // Réduit le padding de 10 à 5
             dataGridView.RowTemplate.Height = 40;
 
             // Alternance de couleurs pour les lignes
@@ -477,9 +488,42 @@ namespace AvionManagment
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
             }
 
-            // Activer le défilement horizontal
-            dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
-            dataGridView.ScrollBars = ScrollBars.Both;
+            // Activer l'ajustement automatique de la largeur des colonnes
+            dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            // Désactiver le défilement horizontal
+            dataGridView.ScrollBars = ScrollBars.Vertical;
+        }
+
+        // Méthode pour ajuster automatiquement la largeur des colonnes
+        private void AdjustColumnWidths()
+        {
+            if (dataGridView != null && dataGridView.Columns.Count > 0)
+            {
+                // Calculer la largeur totale disponible
+                int availableWidth = dataGridView.Width - SystemInformation.VerticalScrollBarWidth;
+
+                // Définir des pourcentages pour chaque colonne
+                double[] columnPercentages = new double[]
+                {
+                    0.03, // Checkbox
+                    0.04, // ID
+                    0.12, // Départ
+                    0.12, // Arrivée
+                    0.09, // Avion
+                    0.11, // Places disponibles
+                    0.07, // Prix
+                    0.07, // De
+                    0.07, // À
+                    0.08  // Actions
+                };
+
+                // Appliquer les pourcentages
+                for (int i = 0; i < dataGridView.Columns.Count && i < columnPercentages.Length; i++)
+                {
+                    dataGridView.Columns[i].Width = (int)(availableWidth * columnPercentages[i]);
+                }
+            }
         }
 
         private void LoadDataFromDatabase()
@@ -500,7 +544,8 @@ namespace AvionManagment
     SELECT v.id_vol, v.date_depart, v.date_arrive, 
            v.id_avion, a.modele AS avion_modele, a.capacite AS avion_capacite,
            v.id_aeroport_depart, ad.ville AS aeroport_depart_ville,
-           v.id_aeroport_arrive, aa.ville AS aeroport_arrive_ville
+           v.id_aeroport_arrive, aa.ville AS aeroport_arrive_ville,
+           v.montant
     FROM vol v
     JOIN avion a ON v.id_avion = a.id_avion
     JOIN aeroport ad ON v.id_aeroport_depart = ad.id_aeroport
@@ -526,7 +571,8 @@ namespace AvionManagment
                                 AeroportDepartId = Convert.ToInt32(reader["id_aeroport_depart"]),
                                 AeroportDepartVille = reader["aeroport_depart_ville"].ToString(),
                                 AeroportArriveId = Convert.ToInt32(reader["id_aeroport_arrive"]),
-                                AeroportArriveVille = reader["aeroport_arrive_ville"].ToString()
+                                AeroportArriveVille = reader["aeroport_arrive_ville"].ToString(),
+                                Montant = reader["montant"] != DBNull.Value ? Convert.ToDecimal(reader["montant"]) : 0 // Lecture du champ Montant
                             };
 
                             // Ajouter le vol à la liste
@@ -563,6 +609,23 @@ namespace AvionManagment
                 e.CellStyle.ForeColor = Color.FromArgb(46, 125, 50);
                 e.CellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
                 e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            // Mettre en évidence la colonne du prix
+            if (e.ColumnIndex == 6 && e.RowIndex >= 0)
+            {
+                e.CellStyle.BackColor = Color.FromArgb(255, 243, 224);
+                e.CellStyle.ForeColor = Color.FromArgb(230, 81, 0);
+                e.CellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+                // Formater le prix avec 2 décimales
+                if (e.Value != null)
+                {
+                    decimal price = (decimal)e.Value;
+                    e.Value = price.ToString("N2");
+                    e.FormattingApplied = true;
+                }
             }
 
             // Personnaliser l'apparence des en-têtes de colonne
@@ -632,9 +695,10 @@ namespace AvionManagment
                 row.Cells[3].Value = dateArrive;
                 row.Cells[4].Value = $"{vol.AvionId} - {vol.AvionModele}";
                 row.Cells[5].Value = vol.AvionCapacite; // Affichage de la capacité
-                row.Cells[6].Value = vol.AeroportDepartVille;
-                row.Cells[7].Value = vol.AeroportArriveVille;
-                row.Cells[8].Value = actionsImage; // Image d'actions selon le rôle
+                row.Cells[6].Value = vol.Montant; // Affichage du prix
+                row.Cells[7].Value = vol.AeroportDepartVille;
+                row.Cells[8].Value = vol.AeroportArriveVille;
+                row.Cells[9].Value = actionsImage; // Image d'actions selon le rôle
             }
 
             // Mettre à jour le texte de pagination
@@ -645,6 +709,9 @@ namespace AvionManagment
 
             // Afficher/masquer les boutons d'administration selon le rôle
             UpdateAdminButtons();
+
+            // Ajuster la largeur des colonnes
+            AdjustColumnWidths();
         }
 
         private void UpdateAdminButtons()
@@ -732,7 +799,7 @@ namespace AvionManagment
         private void DataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             // Vérifier si le clic est sur une ligne valide et dans la colonne Actions
-            if (e.RowIndex >= 0 && e.ColumnIndex == 8) // Colonne Actions
+            if (e.RowIndex >= 0 && e.ColumnIndex == 9) // Colonne Actions (maintenant à l'index 9 avec l'ajout de la colonne Prix)
             {
                 int volId = Convert.ToInt32(dataGridView.Rows[e.RowIndex].Cells[1].Value);
 
@@ -780,7 +847,8 @@ namespace AvionManagment
                     DateArrive = vol.DateArrive,
                     AvionId = vol.AvionId,
                     AeroportDepartId = vol.AeroportDepartId,
-                    AeroportArriveId = vol.AeroportArriveId
+                    AeroportArriveId = vol.AeroportArriveId,
+                    Montant = vol.Montant // Ajout du montant
                 };
 
                 // Afficher la fenêtre en modal
@@ -903,9 +971,12 @@ namespace AvionManagment
                 return;
             }
 
+            // Utiliser le montant du vol s'il est défini, sinon utiliser 100€ par défaut
+            decimal prixVol = vol.Montant > 0 ? vol.Montant : 100.00m;
+
             // Confirmation utilisateur
             DialogResult confirmation = MessageBox.Show(
-                $"Voulez-vous réserver une place pour le vol de {vol.AeroportDepartVille} à {vol.AeroportArriveVille} le {vol.DateDepart:dd/MM/yyyy HH:mm} ?\n\nPrix: 100€",
+                $"Voulez-vous réserver une place pour le vol de {vol.AeroportDepartVille} à {vol.AeroportArriveVille} le {vol.DateDepart:dd/MM/yyyy HH:mm} ?\n\nPrix: {prixVol:N2}€",
                 "Confirmation de réservation",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
@@ -921,7 +992,7 @@ namespace AvionManagment
                 // Démarrer le processus de paiement
                 string checkoutUrl = await DemarrerPaiementStripe(
                     volId,
-                    100.00m,
+                    prixVol,
                     $"Vol {vol.AeroportDepartVille}-{vol.AeroportArriveVille}");
 
                 if (string.IsNullOrEmpty(checkoutUrl))
@@ -1468,62 +1539,61 @@ namespace AvionManagment
                             }
                         }));
                     }
-                    else if (currentUrl.Contains("/paiement-annule") || currentUrl.Contains("success=false")
-                     || currentUrl.Contains("success=false"))
+                    else if (currentUrl.Contains("/paiement-annule") || currentUrl.Contains("success=false"))
                     {
-                            // Marquer le paiement comme échoué et traité
-                            paymentProcessed = true;
-                            paymentSuccessful = false;
+                        // Marquer le paiement comme échoué et traité
+                        paymentProcessed = true;
+                        paymentSuccessful = false;
 
-                            // Afficher la page d'annulation
-                            BeginInvoke(new Action(() => {
-                                ShowCancelPage();
-                            }));
+                        // Afficher la page d'annulation
+                        BeginInvoke(new Action(() => {
+                            ShowCancelPage();
+                        }));
 
-                            // Fermer la fenêtre de paiement après un court délai
-                            BeginInvoke(new Action(async () => {
-                                await Task.Delay(2000);
-                                if (paymentForm != null && !paymentForm.IsDisposed)
-                                {
-                                    paymentForm.Close();
-                                }
-                            }));
-                        }
+                        // Fermer la fenêtre de paiement après un court délai
+                        BeginInvoke(new Action(async () => {
+                            await Task.Delay(2000);
+                            if (paymentForm != null && !paymentForm.IsDisposed)
+                            {
+                                paymentForm.Close();
+                            }
+                        }));
+                    }
                     else if (e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted ||
                              e.WebErrorStatus == CoreWebView2WebErrorStatus.Disconnected ||
                              e.WebErrorStatus == CoreWebView2WebErrorStatus.HostNameNotResolved ||
                              e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionReset)
+                    {
+                        // Si l'erreur est liée à la connexion et que l'URL contient des indicateurs
+                        string url = webView2.Source.ToString();
+
+                        if (url.Contains("/paiement-reussi") || url.Contains("success=true"))
                         {
-                            // Si l'erreur est liée à la connexion et que l'URL contient des indicateurs
-                            string url = webView2.Source.ToString();
+                            // Marquer le paiement comme réussi et traité
+                            paymentProcessed = true;
+                            paymentSuccessful = true;
 
-                            if (url.Contains("/paiement-reussi") || url.Contains("success=true"))
-                            {
-                                // Marquer le paiement comme réussi et traité
-                                paymentProcessed = true;
-                                paymentSuccessful = true;
+                            // Afficher une page HTML de succès au lieu de l'erreur
+                            ShowSuccessPage();
+                        }
+                        else if (url.Contains("/paiement-annule") || url.Contains("success=false"))
+                        {
+                            // Marquer le paiement comme échoué et traité
+                            paymentProcessed = true;
+                            paymentSuccessful = false;
 
-                                // Afficher une page HTML de succès au lieu de l'erreur
-                                ShowSuccessPage();
-                            }
-                            else if (url.Contains("/paiement-annule") || url.Contains("success=false"))
-                            {
-                                // Marquer le paiement comme échoué et traité
-                                paymentProcessed = true;
-                                paymentSuccessful = false;
-
-                                // Afficher une page HTML d'annulation au lieu de l'erreur
-                                ShowCancelPage();
-                            }
-                            else
-                            {
-                                // Afficher une page personnalisée pour les erreurs de connexion
-                                ShowCustomErrorPage();
-                            }
+                            // Afficher une page HTML d'annulation au lieu de l'erreur
+                            ShowCancelPage();
+                        }
+                        else
+                        {
+                            // Afficher une page personnalisée pour les erreurs de connexion
+                            ShowCustomErrorPage();
                         }
                     }
                 }
             }
+        }
 
         // Gestionnaire d'événements pour les erreurs de processus
         private void CoreWebView2_ProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
@@ -1929,35 +1999,95 @@ namespace AvionManagment
                 {
                     connection.Open();
 
-                    // Vérifier si l'utilisateur a déjà réservé ce vol
-                    string checkQuery = "SELECT COUNT(*) FROM reservation WHERE id_vol = @idVol AND id_user = @idUser";
-                    MySqlCommand checkCommand = new MySqlCommand(checkQuery, connection);
-                    checkCommand.Parameters.AddWithValue("@idVol", volId);
-                    checkCommand.Parameters.AddWithValue("@idUser", userId);
+                    // Commencer une transaction pour assurer l'intégrité des données
+                    MySqlTransaction transaction = connection.BeginTransaction();
 
-                    int existingReservations = Convert.ToInt32(checkCommand.ExecuteScalar());
-                    if (existingReservations > 0)
+                    try
                     {
-                        MessageBox.Show("Vous avez déjà réservé une place pour ce vol.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return false;
-                    }
+                        // Vérifier si l'utilisateur a déjà réservé ce vol
+                        string checkQuery = "SELECT COUNT(*) FROM reservation WHERE id_vol = @idVol AND id_user = @idUser";
+                        MySqlCommand checkCommand = new MySqlCommand(checkQuery, connection, transaction);
+                        checkCommand.Parameters.AddWithValue("@idVol", volId);
+                        checkCommand.Parameters.AddWithValue("@idUser", userId);
 
-                    // Insérer la nouvelle réservation
-                    string insertQuery = "INSERT INTO reservation (id_vol, id_user, date_reservation, statut) VALUES (@idVol, @idUser, @dateReservation, @statut)";
-                    MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection);
-                    insertCommand.Parameters.AddWithValue("@idVol", volId);
-                    insertCommand.Parameters.AddWithValue("@idUser", userId);
-                    insertCommand.Parameters.AddWithValue("@dateReservation", DateTime.Now);
-                    insertCommand.Parameters.AddWithValue("@statut", "Confirmée"); // Exemple : statut par défaut
+                        int existingReservations = Convert.ToInt32(checkCommand.ExecuteScalar());
+                        if (existingReservations > 0)
+                        {
+                            MessageBox.Show("Vous avez déjà réservé une place pour ce vol.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            transaction.Rollback();
+                            return false;
+                        }
 
-                    int rowsAffected = insertCommand.ExecuteNonQuery();
+                        // Récupérer le montant du vol
+                        decimal montantVol = 0;
+                        string montantQuery = "SELECT montant FROM vol WHERE id_vol = @idVol";
+                        MySqlCommand montantCommand = new MySqlCommand(montantQuery, connection, transaction);
+                        montantCommand.Parameters.AddWithValue("@idVol", volId);
 
-                    // Mettre à jour la capacité disponible de l'avion
-                    if (rowsAffected > 0)
-                    {
-                        // Récupérer l'ID de l'avion associé au vol
+                        object montantResult = montantCommand.ExecuteScalar();
+                        if (montantResult != null && montantResult != DBNull.Value)
+                        {
+                            montantVol = Convert.ToDecimal(montantResult);
+                        }
+                        else
+                        {
+                            // Si le montant n'est pas défini, utiliser une valeur par défaut
+                            montantVol = 100.00m;
+                        }
+
+                        // Insérer la nouvelle réservation
+                        string insertQuery = "INSERT INTO reservation (id_vol, id_user, date_reservation, statut) VALUES (@idVol, @idUser, @dateReservation, @statut)";
+                        MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection, transaction);
+                        insertCommand.Parameters.AddWithValue("@idVol", volId);
+                        insertCommand.Parameters.AddWithValue("@idUser", userId);
+                        insertCommand.Parameters.AddWithValue("@dateReservation", DateTime.Now);
+                        insertCommand.Parameters.AddWithValue("@statut", "Confirmée");
+
+                        int rowsAffected = insertCommand.ExecuteNonQuery();
+
+                        if (rowsAffected <= 0)
+                        {
+                            transaction.Rollback();
+                            MessageBox.Show("Échec de l'ajout de la réservation.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+
+                        // Récupérer l'ID de la réservation qui vient d'être créée
+                        long idReservation = insertCommand.LastInsertedId;
+
+                        // Ajouter l'enregistrement de paiement
+                        string paymentQuery = "INSERT INTO paiement (id_reservation, montant, date_paiement) VALUES (@idReservation, @montant, @datePaiement)";
+                        MySqlCommand paymentCommand = new MySqlCommand(paymentQuery, connection, transaction);
+                        paymentCommand.Parameters.AddWithValue("@idReservation", idReservation);
+                        paymentCommand.Parameters.AddWithValue("@montant", montantVol);
+                        paymentCommand.Parameters.AddWithValue("@datePaiement", DateTime.Now);
+
+                        int paymentRowsAffected = paymentCommand.ExecuteNonQuery();
+
+                        if (paymentRowsAffected <= 0)
+                        {
+                            transaction.Rollback();
+                            MessageBox.Show("Échec de l'enregistrement du paiement.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+
+                        // Ajouter l'enregistrement du billet
+                        string ticketQuery = "INSERT INTO billet (id_reservation) VALUES (@idReservation)";
+                        MySqlCommand ticketCommand = new MySqlCommand(ticketQuery, connection, transaction);
+                        ticketCommand.Parameters.AddWithValue("@idReservation", idReservation);
+
+                        int ticketRowsAffected = ticketCommand.ExecuteNonQuery();
+
+                        if (ticketRowsAffected <= 0)
+                        {
+                            transaction.Rollback();
+                            MessageBox.Show("Échec de l'émission du billet.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+
+                        // Mettre à jour la capacité disponible de l'avion
                         string avionQuery = "SELECT id_avion FROM vol WHERE id_vol = @idVol";
-                        MySqlCommand avionCommand = new MySqlCommand(avionQuery, connection);
+                        MySqlCommand avionCommand = new MySqlCommand(avionQuery, connection, transaction);
                         avionCommand.Parameters.AddWithValue("@idVol", volId);
 
                         object avionIdResult = avionCommand.ExecuteScalar();
@@ -1967,19 +2097,35 @@ namespace AvionManagment
 
                             // Mettre à jour la capacité de l'avion
                             string updateQuery = "UPDATE avion SET capacite = capacite - 1 WHERE id_avion = @idAvion";
-                            MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection);
+                            MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection, transaction);
                             updateCommand.Parameters.AddWithValue("@idAvion", avionId);
                             updateCommand.ExecuteNonQuery();
+
+                            // Valider toutes les opérations
+                            transaction.Commit();
+
+                            // Afficher un message de confirmation plus détaillé
+                            MessageBox.Show($"Réservation confirmée !\nBillet émis avec succès.\nMontant payé : {montantVol:C2}",
+                                          "Réservation complète",
+                                          MessageBoxButtons.OK,
+                                          MessageBoxIcon.Information);
 
                             return true;
                         }
                         else
                         {
+                            transaction.Rollback();
                             MessageBox.Show("Impossible de trouver l'avion associé à ce vol.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
                         }
                     }
-
-                    return false;
+                    catch (Exception ex)
+                    {
+                        // En cas d'erreur, annuler toutes les opérations
+                        transaction.Rollback();
+                        MessageBox.Show($"Erreur lors de la transaction : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
@@ -2112,26 +2258,8 @@ namespace AvionManagment
                 if (btnNext != null) btnNext.Location = new Point(centerX + 90, 10);
             }
 
-            // Ajuster la largeur du DataGridView pour s'assurer que toutes les colonnes sont visibles
-            if (dataGridView != null)
-            {
-                // Calculer la largeur totale nécessaire pour toutes les colonnes
-                int totalWidth = 0;
-                foreach (DataGridViewColumn col in dataGridView.Columns)
-                {
-                    totalWidth += col.Width;
-                }
-
-                // Si la largeur totale est supérieure à la largeur du contrôle, activer le défilement horizontal
-                if (totalWidth > this.Width)
-                {
-                    dataGridView.ScrollBars = ScrollBars.Both;
-                }
-                else
-                {
-                    dataGridView.ScrollBars = ScrollBars.Vertical;
-                }
-            }
+            // Ajuster la largeur des colonnes du DataGridView
+            AdjustColumnWidths();
         }
     }
 }

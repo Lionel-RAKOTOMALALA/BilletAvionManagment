@@ -135,3 +135,5 @@ E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AvionManagm
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AvionMan.C205F69E.Up2Date
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AvionManagment.exe
 E:\gestion_reservation\AvionManagment\BilletAvionManagment\obj\Debug\AvionManagment.pdb
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\bin\Debug\itextsharp.dll
+E:\gestion_reservation\AvionManagment\BilletAvionManagment\bin\Debug\itextsharp.xml

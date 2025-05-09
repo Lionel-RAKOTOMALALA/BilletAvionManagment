@@ -21,6 +21,8 @@ namespace AvionManagment
         private Tableau_avion tableauAvionControl;
         private Tableau_vol tableauVolControl;
         private Tableau_reservation tableauReservationControl;
+        private Tableau_billet tableauBilletControl = new Tableau_billet();
+
 
         // Couleurs pour le thème moderne sombre
         private Color darkBackground = Color.FromArgb(18, 18, 30);      // Fond principal #12121E
@@ -649,6 +651,22 @@ namespace AvionManagment
             // Mettre à jour le titre de la page
             UpdatePageTitle("Gestion de réservations");
         }
+        private void ShowBilletPanel()
+        {
+            // Mettre en évidence le bouton sélectionné
+            ResetButtonColors();
+            BilletMenuBtn.BackColor = darkSecondary;
+            BilletMenuBtn.ForeColor = textColor;
+            currentSelectedButton = BilletMenuBtn;
+
+            // Afficher le tableau des avions
+            ClearContentPanel();
+            contentPanel.Controls.Add(tableauBilletControl);
+            tableauBilletControl.BringToFront();
+
+            // Mettre à jour le titre de la page
+            UpdatePageTitle("Gestion de Billet");
+        }
 
         private void ShowAvionPanel()
         {
@@ -856,6 +874,11 @@ namespace AvionManagment
         private void ReservationMenuBtn_Click_1(object sender, EventArgs e)
         {
             ShowReservationPanel();
+        }
+
+        private void BilletMenuBtn_Click_1(object sender, EventArgs e)
+        {
+            ShowBilletPanel();
         }
     }
 }   

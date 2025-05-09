@@ -19,6 +19,7 @@ namespace AvionManagment
         public int AvionId { get; set; }
         public int AeroportDepartId { get; set; }
         public int AeroportArriveId { get; set; }
+        public decimal Montant { get; set; } // Ajout de la propriété Montant
 
         // Chaîne de connexion à la base de données
         private readonly string connectionString = "Server=localhost;Database=avionDb;Uid=root;Pwd=;";
@@ -54,6 +55,7 @@ namespace AvionManagment
 
             // Préremplir les champs avec les données du vol
             txtID.Text = VolId.ToString();
+            txtMontant.Text = Montant.ToString("N2"); // Afficher le montant avec 2 décimales
 
             // Définir les dates
             dpDateTimeDepart.SelectedDate = DateDepart.Date;
@@ -188,6 +190,17 @@ namespace AvionManagment
                 AeroportItem aeroportDepart = cmbAeroportDepart.SelectedItem as AeroportItem;
                 AeroportItem aeroportArrive = cmbAeroportArrive.SelectedItem as AeroportItem;
 
+                // Récupérer le prix
+                decimal montant = 0;
+                if (!string.IsNullOrEmpty(txtMontant.Text))
+                {
+                    if (!decimal.TryParse(txtMontant.Text, out montant))
+                    {
+                        MessageBox.Show("Le prix doit être un nombre valide.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+
                 // Vérifier que tous les champs obligatoires sont remplis
                 if (!dateDepart.HasValue || !dateArrive.HasValue ||
                     avion == null || aeroportDepart == null || aeroportArrive == null)
@@ -233,7 +246,8 @@ namespace AvionManagment
 
                     // Requête SQL pour mettre à jour un vol
                     string query = "UPDATE vol SET date_depart = @dateDepart, date_arrive = @dateArrive, " +
-                                  "id_avion = @idAvion, id_aeroport_depart = @idAeroportDepart, id_aeroport_arrive = @idAeroportArrive " +
+                                  "id_avion = @idAvion, id_aeroport_depart = @idAeroportDepart, id_aeroport_arrive = @idAeroportArrive, " +
+                                  "montant = @montant " +
                                   "WHERE id_vol = @idVol";
 
                     MySqlCommand command = new MySqlCommand(query, connection);
@@ -244,6 +258,7 @@ namespace AvionManagment
                     command.Parameters.AddWithValue("@idAvion", avion.Id);
                     command.Parameters.AddWithValue("@idAeroportDepart", aeroportDepart.Id);
                     command.Parameters.AddWithValue("@idAeroportArrive", aeroportArrive.Id);
+                    command.Parameters.AddWithValue("@montant", montant);
                     command.Parameters.AddWithValue("@idVol", VolId);
 
                     int rowsAffected = command.ExecuteNonQuery();

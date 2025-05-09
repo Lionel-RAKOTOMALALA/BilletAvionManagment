@@ -142,6 +142,7 @@
             this.BilletMenuBtn.TabIndex = 3;
             this.BilletMenuBtn.Text = "Billet";
             this.BilletMenuBtn.UseVisualStyleBackColor = true;
+            this.BilletMenuBtn.Click += new System.EventHandler(this.BilletMenuBtn_Click_1);
             // 
             // ReservationMenuBtn
             // 

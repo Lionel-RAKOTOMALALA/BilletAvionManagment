@@ -30,10 +30,6 @@ namespace AvionManagment
             public override string ToString() => Display;
         }
 
-        
-
-
-
         public AjoutVolWindow()
         {
             InitializeComponent();
@@ -142,9 +138,6 @@ namespace AvionManagment
             }
         }
 
-
-
-
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -155,6 +148,17 @@ namespace AvionManagment
                 AvionItem avion = cmbAvion.SelectedItem as AvionItem;
                 AeroportItem aeroportDepart = cmbAeroportDepart.SelectedItem as AeroportItem;
                 AeroportItem aeroportArrive = cmbAeroportArrive.SelectedItem as AeroportItem;
+
+                // Récupérer le prix
+                decimal montant = 0;
+                if (!string.IsNullOrEmpty(txtMontant.Text))
+                {
+                    if (!decimal.TryParse(txtMontant.Text, out montant))
+                    {
+                        MessageBox.Show("Le prix doit être un nombre valide.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
 
                 // Vérifier que tous les champs obligatoires sont remplis
                 if (!dateDepart.HasValue || !dateArrive.HasValue ||
@@ -187,8 +191,8 @@ namespace AvionManagment
                     connection.Open();
 
                     // Requête SQL de base pour insérer un vol
-                    string query = "INSERT INTO vol (date_depart, date_arrive, id_avion, id_aeroport_depart, id_aeroport_arrive) " +
-                                  "VALUES (@dateDepart, @dateArrive, @idAvion, @idAeroportDepart, @idAeroportArrive)";
+                    string query = "INSERT INTO vol (date_depart, date_arrive, id_avion, id_aeroport_depart, id_aeroport_arrive, montant) " +
+                                  "VALUES (@dateDepart, @dateArrive, @idAvion, @idAeroportDepart, @idAeroportArrive, @montant)";
 
                     MySqlCommand command = new MySqlCommand(query, connection);
 
@@ -198,6 +202,7 @@ namespace AvionManagment
                     command.Parameters.AddWithValue("@idAvion", avion.Id);
                     command.Parameters.AddWithValue("@idAeroportDepart", aeroportDepart.Id);
                     command.Parameters.AddWithValue("@idAeroportArrive", aeroportArrive.Id);
+                    command.Parameters.AddWithValue("@montant", montant);
 
                     int rowsAffected = command.ExecuteNonQuery();
 
